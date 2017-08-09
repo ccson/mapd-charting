@@ -11,6 +11,15 @@ function getPixelSize (neLat, width, zoom) {
   )
 }
 
+function getMarkHeight (type, width) {
+  switch (type) {
+    case "hex_horiz":
+      return 2 * width / Math.sqrt(3.0)
+    default:
+      return width
+  }
+}
+
 export default function rasterLayerHeatmapMixin (_layer) {
   let state = {}
 
@@ -37,59 +46,46 @@ export default function rasterLayerHeatmapMixin (_layer) {
   _layer._genVega = function ({table, width, height, min, max, filter, neLat, zoom}) {
     const pixelSize = getPixelSize(neLat, width, zoom)
     const numBinsX = Math.round(width / pixelSize)
-    const numBinsY = Math.round(height * numBinsX / width)
-
+    const markWidth = width / numBinsX
+    const markHeight = getMarkHeight(state.mark, markWidth)
+    // console.log()
     return {
-      data: {
-        name: "heatmap_query",
-        sql: parser.writeSQL({
-          type: "root",
-          source: table,
-          transform: [
-            {
-              type: "filter",
-              expr: filter
-            },
-            {
-              type: "aggregate",
-              fields: [state.encoding.color.field],
-              ops: [state.encoding.color.aggregate],
-              as: ["color"],
-              groupby: [
-                {
-                  type: "project",
-                  expr: {
-                    type: "pixel_bin",
-                    shape: "rect",
-                    field: `conv_4326_900913_x(${state.encoding.x.field})`,
-                    domain: [min[0], max[0]],
-                    bin: {
-                      num: numBinsX,
-                      size: width
-                    }
-                  },
-                  as: "x"
+      "width": width,
+      "height": height,
+      "data":
+        {
+          "name": "heatmap_query",
+          "sql": parser.writeSQL({
+            type: "root",
+            source: table,
+            transform: [
+              {
+                type: "filter",
+                expr: filter
+              },
+              {
+                type: "pixel_bin",
+                width,
+                height,
+                mark: {
+                  shape: state.mark,
+                  width: markWidth,
+                  height: markHeight,
                 },
-                {
-                  type: "project",
-                  expr: {
-                    type: "pixel_bin",
-                    shape: "rect",
-                    field: `conv_4326_900913_y(${state.encoding.y.field})`,
-                    domain: [min[1], max[1]],
-                    bin: {
-                      num: numBinsY,
-                      size: height
-                    }
-                  },
-                  as: "y"
-                }
-              ]
-            }
-          ]
-        })
-      },
-      scales: [
+                x: {
+                  field: `conv_4326_900913_x(${state.encoding.x.field})`,
+                  domain: [min[0], max[0]]
+                },
+                y: {
+                  field: `conv_4326_900913_y(${state.encoding.y.field})`,
+                  domain: [min[1], max[1]]
+                },
+                aggregate: "COUNT(lang)"
+              }
+            ]
+          })
+        },
+      "scales": [
         {
           name: "heat_color",
           type: state.encoding.color.type,
@@ -99,28 +95,30 @@ export default function rasterLayerHeatmapMixin (_layer) {
           nullValue: state.encoding.color.scale.nullValue
         }
       ],
-      mark: {
-        type: "symbol",
-        from: {
-          data: "heatmap_query"
-        },
-        properties: {
-          shape: state.mark,
-          x: {
-            field: "x"
+      "mark":
+        {
+          "type": "symbol",
+          "from": {
+            "data": "heatmap_query"
           },
-          y: {
-            field: "y"
-          },
-          width: width / numBinsX,
-          height: height / numBinsY,
-          fillColor: {
-            scale: "heat_color",
-            field: "color"
+          "properties": {
+            "shape": state.mark,
+            "xc": {
+              "field": "x"
+            },
+            "yc": {
+              "field": "y"
+            },
+            "width": markWidth,
+            "height": markHeight,
+            "fillColor": {
+              "scale": "heat_color",
+              "field": "color"
+            },
           }
         }
-      }
-    }
+    };
+
   }
 
   return _layer

@@ -12,9 +12,9 @@ const shapeSize = (bins, size, gap = GAP_SIZE) => size/bins
 let HeatLayer
 
 const Connector = new MapdCon()
-  .protocol("https")
-  .host("metis.mapd.com")
-  .port("443")
+  .protocol("http")
+  .host("mahakali.mapd.com")
+  .port("9092")
   .dbName("mapd")
   .user("mapd")
   .password("HyperInteractive")
