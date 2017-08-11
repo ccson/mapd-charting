@@ -80,7 +80,7 @@ export default function rasterLayerHeatmapMixin (_layer) {
                   field: `conv_4326_900913_y(${state.encoding.y.field})`,
                   domain: [min[1], max[1]]
                 },
-                aggregate: "COUNT(lang)"
+                aggregate: "COUNT(*)"
               }
             ]
           })
