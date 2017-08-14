@@ -13,10 +13,19 @@ function getPixelSize (neLat, width, zoom) {
 
 function getMarkHeight (type, width) {
   switch (type) {
-    case "hex_horiz":
+    case "hex":
       return 2 * width / Math.sqrt(3.0)
     default:
       return width
+  }
+}
+
+function getMarkType (type) {
+  switch (type) {
+    case "hex":
+      return "hexagon-horiz"
+    default:
+      return type
   }
 }
 
@@ -48,7 +57,7 @@ export default function rasterLayerHeatmapMixin (_layer) {
     const numBinsX = Math.round(width / pixelSize)
     const markWidth = width / numBinsX
     const markHeight = getMarkHeight(state.mark, markWidth)
-    // console.log()
+
     return {
       "width": width,
       "height": height,
@@ -102,7 +111,7 @@ export default function rasterLayerHeatmapMixin (_layer) {
             "data": "heatmap_query"
           },
           "properties": {
-            "shape": state.mark,
+            "shape": getMarkType(state.mark),
             "xc": {
               "field": "x"
             },

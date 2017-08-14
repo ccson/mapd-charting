@@ -57,8 +57,8 @@ function hexBinSQL (sql, {width, height, mark, x, y, aggregate}, parser) {
     ${height}
   `
 
-  sql.select.push(`reg_${mark.shape}_pixel_bin_x(${args}) as x`)
-  sql.select.push(`reg_${mark.shape}_pixel_bin_y(${args}) as y`)
+  sql.select.push(`reg_${mark.shape}_horiz_pixel_bin_x(${args}) as x`)
+  sql.select.push(`reg_${mark.shape}_horiz_pixel_bin_y(${args}) as y`)
   sql.select.push(`${aggregate} as color`)
   sql.groupby.push("x")
   sql.groupby.push("y")
@@ -67,7 +67,6 @@ function hexBinSQL (sql, {width, height, mark, x, y, aggregate}, parser) {
 }
 
 function rectBinSQL (sql, {width, height, mark, x, y, aggregate}, parser) {
-
   sql.select.push(`rect_pixel_bin_x(
       ${parser.parseExpression(x.field)},
       ${x.domain[0]},
@@ -98,11 +97,9 @@ parser.registerParser({
   type: "pixel_bin"
 }, (sql, transform, parser) => {
   switch (transform.mark.shape) {
-    case "hexagon-horiz":
-    case "hex_horiz":
+    case "hex":
       return hexBinSQL(sql, transform, parser)
     case "square":
-    case "rect":
       return rectBinSQL(sql, transform, parser)
     default:
       return sql
