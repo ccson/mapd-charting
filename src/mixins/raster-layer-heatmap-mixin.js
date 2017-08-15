@@ -53,8 +53,9 @@ export default function rasterLayerHeatmapMixin (_layer) {
   }
 
   _layer._genVega = function ({table, width, height, min, max, filter, neLat, zoom}) {
-    const pixelSize = getPixelSize(neLat, width, zoom)
+    const pixelSize = state.encoding.size.type === "manual" ? state.encoding.size.value : getPixelSize(neLat, width, zoom)
     const numBinsX = Math.round(width / pixelSize)
+
     const markWidth = width / numBinsX
     const markHeight = getMarkHeight(state.mark, markWidth)
 
@@ -118,8 +119,8 @@ export default function rasterLayerHeatmapMixin (_layer) {
             "yc": {
               "field": "y"
             },
-            "width": markWidth - (state.encoding.size.gap || 0),
-            "height": markHeight - (state.encoding.size.gap || 0),
+            "width": markWidth,
+            "height": markHeight,
             "fillColor": {
               "scale": "heat_color",
               "field": "color"
