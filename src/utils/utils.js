@@ -59,7 +59,7 @@ function hexBinSQL (sql, {width, height, mark, x, y, aggregate}, parser) {
 
   sql.select.push(`reg_${mark.shape}_horiz_pixel_bin_x(${args}) as x`)
   sql.select.push(`reg_${mark.shape}_horiz_pixel_bin_y(${args}) as y`)
-  sql.select.push(`${aggregate} as color`)
+  sql.select.push(`${parser.parseExpression(aggregate)} as color`)
   sql.groupby.push("x")
   sql.groupby.push("y")
 
@@ -85,7 +85,7 @@ function rectBinSQL (sql, {width, height, mark, x, y, aggregate}, parser) {
       ${height}
     ) as y`)
 
-  sql.select.push(`${aggregate} as color`)
+  sql.select.push(`${parser.parseExpression(aggregate)} as color`)
   sql.groupby.push("x")
   sql.groupby.push("y")
 

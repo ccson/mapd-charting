@@ -118,8 +118,8 @@ export default function rasterLayerHeatmapMixin (_layer) {
             "yc": {
               "field": "y"
             },
-            "width": markWidth,
-            "height": markHeight,
+            "width": markWidth - (state.encoding.size.gap || 0),
+            "height": markHeight - (state.encoding.size.gap || 0),
             "fillColor": {
               "scale": "heat_color",
               "field": "color"
