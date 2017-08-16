@@ -41,7 +41,7 @@ export default function rasterLayerHeatmapMixin (_layer) {
   _layer._mandatoryAttributes([])
 
   _layer.setState = function (setterOrState) {
-    if (typeof setter === "function") {
+    if (typeof setterOrState === "function") {
       state = setterOrState(state)
     } else {
       state = setterOrState
@@ -52,10 +52,43 @@ export default function rasterLayerHeatmapMixin (_layer) {
     return JSON.parse(JSON.stringify(state))
   }
 
+  _layer.genSQL = function ({table, width, height, min, max, filter}) {
+    const markWidth = width / Math.round(width / state.encoding.size.value)
+    const markHeight = getMarkHeight(state.mark, markWidth)
+    return parser.writeSQL({
+      type: "root",
+      source: table,
+      transform: [
+        {
+          type: "filter",
+          expr: filter
+        },
+        {
+          type: "pixel_bin",
+          width,
+          height,
+          mark: {
+            shape: state.mark,
+            width: markWidth,
+            height: markHeight,
+          },
+          x: {
+            field: `conv_4326_900913_x(${state.encoding.x.field})`,
+            domain: [min[0], max[0]]
+          },
+          y: {
+            field: `conv_4326_900913_y(${state.encoding.y.field})`,
+            domain: [min[1], max[1]]
+          },
+          aggregate: "COUNT(*)"
+        }
+      ]
+    })
+  }
+
   _layer._genVega = function ({table, width, height, min, max, filter, neLat, zoom}) {
     const pixelSize = state.encoding.size.type === "manual" ? state.encoding.size.value : getPixelSize(neLat, width, zoom)
     const numBinsX = Math.round(width / pixelSize)
-
     const markWidth = width / numBinsX
     const markHeight = getMarkHeight(state.mark, markWidth)
 
@@ -128,7 +161,18 @@ export default function rasterLayerHeatmapMixin (_layer) {
           }
         }
     };
+  }
 
+  _layer._destroyLayer = function (chart) {
+    const xDim = _layer.xDim()
+    if (xDim) {
+      xDim.dispose()
+    }
+
+    const yDim = _layer.yDim()
+    if (yDim) {
+      yDim.dispose()
+    }
   }
 
   return _layer
