@@ -161,6 +161,34 @@ export default function rasterLayer (layerType) {
     }
   }
 
+  _layer.getColorDomain = function (chart) {
+    const subquery = _layer.genSQL({
+      table: _layer.crossfilter().getTable()[0],
+      width: Math.round(chart.width() * chart._getPixelRatio()),
+      height: Math.round(chart.height() * chart._getPixelRatio()),
+      min: chart.conv4326To900913(chart._minCoord),
+      max: chart.conv4326To900913(chart._maxCoord),
+      filter: _layer.crossfilter().getFilterString()
+    })
+
+    const sql = `SELECT MIN(c.color) as minimum, MAX(c.color) as maximum, STDDEV(c.color) as deviation, AVG(c.color) as mean FROM (${subquery}) as c`
+
+    return new Promise ((resolve, reject) => {
+      chart.con().query(sql, null, (error, result) => {
+        if (error) {
+          reject(error)
+        } else {
+          const {minimum, maximum, mean, deviation} = result[0]
+          const step = 2 * deviation
+          resolve([
+            Math.max(minimum, mean - step),
+            Math.min(maximum, mean + step)
+          ])
+        }
+      })
+    })
+  }
+
   _layer.genVega = function (chart, layerName) {
     _mandatoryAttributes.forEach((attrName) => {
       checkForMandatoryLayerAttr(_layer, attrName, layerName)
@@ -192,7 +220,8 @@ export default function rasterLayer (layerType) {
         max: chart.conv4326To900913(chart._maxCoord),
         filter: _layer.crossfilter().getFilterString(),
         neLat: chart._maxCoord[1],
-        zoom: chart.zoom()
+        zoom: chart.zoom(),
+        domain: chart.colors().domain()
       })
       return vega
     } else {

@@ -86,7 +86,7 @@ export default function rasterLayerHeatmapMixin (_layer) {
     })
   }
 
-  _layer._genVega = function ({table, width, height, min, max, filter, neLat, zoom}) {
+  _layer._genVega = function ({table, width, height, min, max, filter, neLat, zoom, domain}) {
     const pixelSize = state.encoding.size.type === "manual" ? state.encoding.size.value : getPixelSize(neLat, width, zoom)
     const numBinsX = Math.round(width / pixelSize)
     const markWidth = width / numBinsX
@@ -132,7 +132,7 @@ export default function rasterLayerHeatmapMixin (_layer) {
         {
           name: "heat_color",
           type: state.encoding.color.type,
-          domain: state.encoding.color.scale.domain,
+          domain: state.encoding.color.scale.domain === "auto" ? domain : state.encoding.color.scale.domain,
           range: state.encoding.color.scale.range,
           default: state.encoding.color.scale.default,
           nullValue: state.encoding.color.scale.nullValue
@@ -164,6 +164,7 @@ export default function rasterLayerHeatmapMixin (_layer) {
   }
 
   _layer._destroyLayer = function (chart) {
+    console.log('destroy')
     const xDim = _layer.xDim()
     if (xDim) {
       xDim.dispose()
